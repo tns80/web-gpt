@@ -36,7 +36,9 @@ jobs:
         run: flutter pub get
         
       - name: Apply WebSight configuration
-        run: dart run tool/configure.dart
+        run: |
+          dart run tool/configure.dart
+          sed -i 's/^name: .*/name: websight/' pubspec.yaml
 
       - name: Verify formatting (lib + test + tool)
         run: dart format --set-exit-if-changed lib test tool
