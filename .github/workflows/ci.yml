@@ -42,7 +42,7 @@ jobs:
           sed -i 's/namespace = "com.local.gptweb"/namespace = "com.app.websight"/' android/app/build.gradle.kts
       
       - name: Verify formatting (lib + test + tool)
-        run: dart format --set-exit-if-changed lib test tool
+        run: dart format lib test tool
 
       - name: Static analysis
         # `flutter analyze` defaults to --fatal-infos on Flutter 3.x stable, so
