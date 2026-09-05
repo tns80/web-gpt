@@ -1,0 +1,347 @@
+# Welcome to the WebSight Configuration File!
+# This file is the single source of truth that defines your entire application.
+# To get started, you can rename this file to `webview_config.yaml` and build the app.
+# It is pre-configured to create a demo app for the official Flutter website.
+
+# -----------------------------------------------------------------------------
+# [CORE APP IDENTITY]
+# -----------------------------------------------------------------------------
+app:
+  # The name of your application as it will appear in the UI.
+  name: "WebSight Demo"
+
+  # The primary domain your WebView should treat as first-party.
+  # CRITICAL: This MUST match your website's host. Do not include 'https://' or paths.
+  host: "flutter.dev"
+
+  # The full initial URL to load when the app starts.
+  home_url: "https://flutter.dev/"
+
+  # Android applicationId (reverse-DNS, lowercase).
+  # When set, `dart run tool/configure.dart` writes this into
+  # android/app/build.gradle.kts (applicationId + namespace) and the manifest
+  # provider authority. Leave commented to keep the demo default.
+  # application_id: "com.yourcompany.yourapp"
+
+  # AdMob console App ID for this Android app.
+  # NOTE: this is the App ID (with a "~"), NOT the Ad Unit IDs (which contain
+  # a "/"). Unit IDs go under `ads.placements.*.ad_unit_id` below.
+  # When set, `dart run tool/configure.dart` writes it into the
+  # AndroidManifest.xml `com.google.android.gms.ads.APPLICATION_ID` meta-data.
+  # admob_app_id: "ca-app-pub-XXXXXXXXXX~YYYYYYYYYY"
+
+  # Optional pubspec version override. When set,
+  # `dart run tool/configure.dart` writes it into pubspec.yaml `version:`.
+  # version: "1.0.0+1"
+
+# -----------------------------------------------------------------------------
+# [FLUTTER UI/UX LAYER]
+# This section controls the native Flutter shell around your web content.
+# -----------------------------------------------------------------------------
+flutter_ui:
+  theme:
+    # The overall brightness of the app's native UI.
+    # Options: "light", "dark", "system"
+    brightness: "dark"
+
+    # The primary seed color for the entire app.
+    # All other colors will be algorithmically generated from this color.
+    primary: "#0175C2"
+
+    # (Optional) Override the main background color.
+    # surface: "#0B0B0C"
+
+    # (Optional) Override the color of text and icons on the main background.
+    # on_surface: "#F5F5F5"
+
+    # Whether to use the modern Material 3 design system. Highly recommended.
+    use_material3: true
+
+    # (Optional) The name of a font from fonts.google.com to apply to all native UI.
+    font_family: "Inter"
+
+  # ---------------------------------------------------------------------------
+  # [SYSTEM UI / IMMERSIVE FEEL]
+  # The point of WebSight is to make a wrapped site feel like a native app.
+  # Edge-to-edge is the default; the WebView paints under transparent system
+  # bars. Set `mode: "default"` to fall back to the standard "shell with
+  # opaque chrome" look (e.g. for kiosk or admin tools that want explicit
+  # bars).
+  # ---------------------------------------------------------------------------
+  system_ui:
+    # How the OS status / nav bars are handled.
+    #   default          - Flutter default; opaque bars push content.
+    #   edge_to_edge     - Window draws under transparent bars (RECOMMENDED).
+    #   immersive_sticky - Bars hidden, swipe to reveal (media-heavy sites).
+    #   leanback         - Bars hidden, no reveal (kiosk / TV).
+    mode: "edge_to_edge"
+
+    status_bar:
+      visible: true             # ignored under immersive_sticky / leanback
+      transparent: true         # let the WebView paint behind the bar
+      icon_brightness: "auto"   # auto | light | dark; auto follows theme
+
+    navigation_bar:
+      visible: true
+      transparent: true
+      icon_brightness: "auto"
+
+    # Inject `viewport-fit=cover` + a `--websight-safe-*` CSS variable shim
+    # so the wrapped site can pad its own header/footer with
+    # `env(safe-area-inset-top)` / `var(--websight-safe-top)`. Disable if
+    # the site already declares viewport-fit and you don't want extra meta.
+    inject_safe_area_css: true
+
+    # Defensive auto-padding on `<body>` so sites that DON'T natively
+    # respect `env(safe-area-inset-*)` don't have their content (logos,
+    # sticky headers in normal flow, footers) slide under the transparent
+    # status / nav bars. Wrapped in an `@supports` block so older engines
+    # ignore it. Disable when the wrapped site handles insets itself, or
+    # tighten `auto_pad_edges` if only specific edges overlap.
+    auto_pad_body: true
+    # Edges to pad: any of `top`, `bottom`, `left`, `right`. Defaults to
+    # the two that overlap content in portrait. `left`/`right` matter only
+    # in landscape on side-notched devices.
+    auto_pad_edges: ["top", "bottom"]
+
+  layout:
+    # The main navigation style for the app.
+    # Options: "drawer", "bottom_tabs", "top_tabs", "none"
+    # NOTE: Set "none" (and `appbar.visible: false`) for the most native
+    # feel — the wrapped site provides its own UI; WebSight is invisible.
+    scaffold: "drawer"
+
+    appbar:
+      # Whether the AppBar is visible by default. Can be overridden per route.
+      visible: true
+      # A list of icon buttons to display on the right side of the AppBar.
+      actions:
+        - id: "refresh"
+          icon: "Icons.refresh"
+          action: "webview.reload"
+        - id: "settings"
+          icon: "Icons.settings_outlined"
+          action: "navigate:/native/settings"
+
+    # Whether to show a Floating Action Button (FAB).
+    visible: false
+
+# -----------------------------------------------------------------------------
+# [ROUTES & NAVIGATION]
+# Defines all the screens (both web and native) in your app.
+# -----------------------------------------------------------------------------
+routes:
+  - path: "/web/home"
+    kind: "webview"
+    title: "Flutter Home"
+    label: "Home"
+    icon: "Icons.home_outlined"
+    url: "https://flutter.dev/"
+    appbar_visible: true
+    pull_to_refresh: true
+
+  - path: "/native/watchlist"
+    kind: "native"
+    title: "Watchlist"
+    label: "Watchlist"
+    icon: "Icons.star_border"
+    appbar_visible: true
+    pull_to_refresh: false
+    
+  - path: "/native/portfolio"
+    kind: "native"
+    title: "Portfolio"
+    label: "Portfolio"
+    icon: "Icons.account_balance_wallet_outlined"
+    appbar_visible: true
+    pull_to_refresh: false
+    
+  - path: "/native/alerts"
+    kind: "native"
+    title: "Alerts"
+    label: "Alerts"
+    icon: "Icons.notifications_none"
+    appbar_visible: true
+    pull_to_refresh: false
+
+  - path: "/native/settings"
+    kind: "native"
+    title: "Settings"
+    label: "Settings"
+    icon: "Icons.settings_outlined"
+    appbar_visible: true
+    pull_to_refresh: false
+
+# -----------------------------------------------------------------------------
+# [WEBVIEW ENGINE]
+# -----------------------------------------------------------------------------
+navigation:
+  # External domains that, if navigated to, will open in an external browser.
+  external_allowlist:
+    - "google.com"
+    - "github.com"
+    - "dart.dev"
+
+  deep_links:
+    enable: true
+    hosts:
+      - "flutter.dev"
+
+webview_settings:
+  javascript_enabled: true
+  dom_storage_enabled: true
+
+  # Multi-window popup support. Many OAuth providers (Google / Microsoft /
+  # Twitter / Facebook "Sign in with…") open the auth flow via
+  # `window.open()`. webview_flutter_android does not expose a public
+  # onCreateWindow API, so WebSight intercepts `window.open` from the
+  # wrapped page and routes the URL into a Flutter modal popup WebView.
+  multi_window:
+    enabled: true                # disable to suppress popups entirely
+    close_on_parent_host: true   # auto-close when popup hits a parent host
+    reload_parent_on_close: true # reload underlying page after popup closes
+
+  # HTML5 `<video>` fullscreen handler (the fullscreen icon in a video
+  # player calls WebChromeClient.onShowCustomView). Without this, the
+  # button does nothing.
+  fullscreen_video:
+    enabled: true
+    lock_landscape: false        # let the video / page decide orientation
+
+# -----------------------------------------------------------------------------
+# [JAVASCRIPT BRIDGE]
+# -----------------------------------------------------------------------------
+js_bridge:
+  enabled: true
+  name: "WebSightBridge"
+  secure_origin_only: true
+
+  # Outbound methods (JS calling native).
+  methods:
+    - "scanBarcode(callbackFn)"
+    - "share(text)"
+    - "getDeviceInfo()"
+    - "downloadBlob(url, filename?)"
+    - "openExternal(url)"
+    - "registerHttpDownload(url, opts?)"
+
+  # Inbound events (JS dispatching to native).
+  inbound_events:
+    - event: "openNative"
+      args: ["route"]
+      action: "navigate:{route}"
+    - event: "toast"
+      args: ["message"]
+      action: "ui.toast:{message}"
+
+# -----------------------------------------------------------------------------
+# [SECURITY]
+# -----------------------------------------------------------------------------
+security:
+  # List of hosts the WebView is allowed to navigate to internally.
+  restrict_to_hosts:
+    - "flutter.dev"
+
+# -----------------------------------------------------------------------------
+# [WEBVIEW PERMISSIONS]
+# Allowlist for prompts the wrapped site can trigger via standard browser
+# APIs (`getUserMedia`, `navigator.geolocation`). The runtime OS-level
+# permission is requested via permission_handler at the moment the site
+# asks — so the user sees a single Android prompt, not a separate
+# WebView dialog.
+# -----------------------------------------------------------------------------
+permissions:
+  webview:
+    allow_camera: true
+    allow_microphone: true
+    allow_geolocation: true
+    allow_protected_media: false    # EME / DRM resource id; opt-in only
+    retain_geolocation: false       # remember the user's geo grant per origin
+
+# -----------------------------------------------------------------------------
+# [MONETIZATION & COMPLIANCE]
+# -----------------------------------------------------------------------------
+ads:
+  enabled: true
+  consent_gate_with_ump: true
+  
+  placements:
+    # A global fallback banner ad.
+    global_banner:
+      screen_scope: "all"
+      format: "banner_adaptive"
+      position: "bottom"
+      # This is Google's example Ad Unit ID for testing.
+      ad_unit_id: "ca-app-pub-3940256099942544/6300978111"
+
+    # Route-specific ad placements.
+    route_placements:
+      home_collapsible_banner:
+        screen_scope: "route"
+        route: "/web/home"
+        format: "banner_collapsible"
+        position: "bottom"
+        ad_unit_id: "ca-app-pub-3940256099942544/6300978111"
+
+# -----------------------------------------------------------------------------
+# [APP LIFECYCLE & POLISH]
+# -----------------------------------------------------------------------------
+updates:
+  # In-app update mode. Options: "none", "flexible", "immediate"
+  in_app_updates: "flexible"
+
+analytics_crash:
+  analytics: true
+  crashlytics: true
+
+notifications:
+  post_notifications_permission: true
+  fcm_enabled: false
+
+behavior_overrides:
+  back_button:
+    confirm_before_exit: true
+
+# -----------------------------------------------------------------------------
+# [LEGAL / DISCLAIMERS]
+# Recommended when wrapping a third-party site you don't own. Acceptance is
+# keyed on a hash of the body text, so editing the body re-prompts on next
+# launch.
+# -----------------------------------------------------------------------------
+legal:
+  unofficial_disclaimer:
+    enabled: false
+    title: "Unofficial app"
+    body: |
+      This app is an unofficial WebView wrapper.
+      It is not affiliated with or endorsed by the operator of the embedded site.
+      Content is provided as-is; the publisher of this app is not responsible
+      for the accuracy or availability of that content.
+
+      By tapping "I understand", you accept these terms and use the app for
+      personal, development, or educational purposes.
+    accept_label: "I understand"
+    decline_label: "Exit"
+    require_accept: true
+
+# -----------------------------------------------------------------------------
+# [SPLASH SCREEN]
+# In-Flutter splash shown while the first WebView page loads. For the native
+# pre-Flutter splash (the first frame after process start, before the engine
+# draws), see the README section on `flutter_native_splash`.
+# -----------------------------------------------------------------------------
+splash:
+  enabled: false                # set true to display the splash overlay
+  timeout_ms: 1500              # how long the splash stays on screen
+  fade_out_ms: 300              # cross-fade duration once the splash exits
+  # image_asset: "assets/splash/logo.png"   # any Flutter asset path
+  # background_color: "#0B0B0C"             # falls back to theme surface
+  # tagline: "Loading your dashboard…"
+
+# -----------------------------------------------------------------------------
+# [DOWNLOADS] (consumed by the JS download interceptor)
+# -----------------------------------------------------------------------------
+downloads:
+  enabled: true
+  use_android_download_manager: true
+  support_blob_urls: true

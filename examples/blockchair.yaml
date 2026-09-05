@@ -1,0 +1,217 @@
+# WebSight starter config for blockchair.com — chrome-less / native-feel.
+#
+# Copy this over assets/webview_config.yaml, then run
+#     dart run tool/configure.dart
+# to propagate the identity into the Android build files.
+#
+# DESIGN NOTES
+#   * No AppBar, no drawer, no bottom tabs. Blockchair already ships a fully
+#     responsive mobile UI; the goal is for WebSight to be invisible.
+#   * Edge-to-edge with transparent system bars; the page paints under the
+#     status / nav bars and uses `env(safe-area-inset-*)` (auto-injected by
+#     WebSight) to inset its own header / footer when needed.
+#   * Multi-window popups, HTML5 fullscreen video, in-page camera / mic /
+#     geolocation prompts all enabled — the things users complained about in
+#     the legacy Java wrapper.
+#   * Ads are off in this starter so the first build doesn't hit AdMob/UMP at
+#     all. Flip `ads.enabled: true` once you've created the AdMob app + units
+#     and pasted the IDs in.
+#
+# IMPORTANT before publishing:
+#   1. blockchair.com is a third-party site you don't own. Read
+#      docs/WHITELABEL.md "Trademark, ToS, and Play policy" before submitting
+#      to Play Console.
+#   2. Replace `app.application_id` and `app.admob_app_id` with your own
+#      values.
+
+app:
+  name: "Blockchair Lens"
+  host: "blockchair.com"
+  home_url: "https://blockchair.com/"
+  application_id: "com.yourcompany.blockchairlens"
+  # admob_app_id: "ca-app-pub-XXXXXXXXXX~YYYYYYYYYY"
+  version: "1.0.0+1"
+
+flutter_ui:
+  theme:
+    brightness: "dark"
+    primary: "#16A34A"
+    surface: "#0B0B0C"
+    on_surface: "#F5F5F5"
+    use_material3: true
+    font_family: "Inter"
+
+  # Edge-to-edge by default; this is what makes the wrapped site feel
+  # native rather than "embedded in a wrapper".
+  system_ui:
+    mode: "edge_to_edge"
+    status_bar:
+      visible: true
+      transparent: true
+      icon_brightness: "auto"
+    navigation_bar:
+      visible: true
+      transparent: true
+      icon_brightness: "auto"
+    # The shim adds CSS variables for the wrapped site to use itself,
+    # AND defensively pads `<body>` for sites that don't read insets.
+    # Set `auto_pad_body: false` if Blockchair already handles its own
+    # safe-area insets (pad would then be additive and visible as an
+    # extra strip).
+    inject_safe_area_css: true
+    auto_pad_body: true
+    auto_pad_edges: ["top", "bottom"]
+
+  # No native chrome at all — the wrapped site IS the UI. Want a refresh
+  # button? Use pull-to-refresh (configured per-route below) or wire it
+  # into the site's own UI via the JS bridge.
+  layout:
+    scaffold: "none"
+    appbar:
+      visible: false
+      actions: []
+
+# Single webview route; pull-to-refresh handles "I want to reload" without
+# needing a refresh button in chrome.
+routes:
+  - path: "/web/home"
+    kind: "webview"
+    title: "Blockchair"
+    url: "https://blockchair.com/"
+    pull_to_refresh: true
+    appbar_visible: false
+
+navigation:
+  external_allowlist:
+    - "blockchair.com"
+  deep_links:
+    enable: true
+    hosts:
+      - "blockchair.com"
+
+webview_settings:
+  javascript_enabled: true
+  dom_storage_enabled: true
+
+  # OAuth flows that open `window.open(...)` are routed into a Flutter modal
+  # popup. Auto-closes when the popup navigates back to a host in
+  # `security.restrict_to_hosts`.
+  multi_window:
+    enabled: true
+    close_on_parent_host: true
+    reload_parent_on_close: true
+
+  # The fullscreen icon on `<video>` elements actually works.
+  fullscreen_video:
+    enabled: true
+    lock_landscape: false
+
+# In-page QR scanners, camera demos, and `navigator.geolocation` prompts on
+# blockchair.com (or any allowed host) trigger a single Android permission
+# dialog. The native JS bridge `WebSightBridge.scanBarcode()` is still
+# available for sites that prefer a native scanner.
+permissions:
+  webview:
+    allow_camera: true
+    allow_microphone: true
+    allow_geolocation: true
+    allow_protected_media: false
+
+security:
+  restrict_to_hosts:
+    - "blockchair.com"
+
+js_bridge:
+  enabled: true
+  name: "WebSightBridge"
+  secure_origin_only: true
+  methods:
+    - "scanBarcode(callbackFn)"
+    - "share(text)"
+    - "getDeviceInfo()"
+    - "downloadBlob(url, filename?)"
+    - "openExternal(url)"
+    - "registerHttpDownload(url, opts?)"
+  inbound_events:
+    - event: "toast"
+      args: ["message"]
+      action: "ui.toast:{message}"
+
+file_uploads:
+  enabled: false           # blockchair.com doesn't expose <input type=file>
+  capture_camera: false
+  mime_types: ["*/*"]
+
+downloads:
+  enabled: true
+  use_android_download_manager: true
+  support_blob_urls: true
+
+ads:
+  enabled: false
+  consent_gate_with_ump: false
+  placements:
+    global_banner:
+      screen_scope: "all"
+      format: "banner_adaptive"
+      position: "bottom"
+      ad_unit_id: "ca-app-pub-3940256099942544/6300978111"
+
+billing:
+  inapp_enabled: false
+  product_ids: []
+
+rating_prompt:
+  enabled: true
+  after_launches: 5
+
+analytics_crash:
+  analytics: true
+  crashlytics: true
+
+updates:
+  in_app_updates: "flexible"
+
+notifications:
+  post_notifications_permission: true
+  fcm_enabled: false
+
+behavior_overrides:
+  back_button:
+    confirm_before_exit: true
+  error_pages:
+    show_offline_page: true
+    retry_button: true
+
+splash:
+  enabled: true
+  timeout_ms: 1200
+  fade_out_ms: 300
+  background_color: "#0B0B0C"
+  tagline: "Loading Blockchair…"
+
+offline_local_html:
+  fallback_when_offline: true
+  index_asset: "offline/index.html"
+
+# Strongly recommended for any whitelabel of a site you don't own.
+# Reads "this app is unofficial" on first launch; users must accept
+# (or exit) before reaching the WebView. Edit the body to taste — the
+# acceptance is keyed on a hash of the body, so changes re-prompt on
+# next launch.
+legal:
+  unofficial_disclaimer:
+    enabled: true
+    title: "Unofficial app"
+    body: |
+      This app is an unofficial WebView wrapper around blockchair.com.
+      It is not affiliated with or endorsed by Blockchair Inc.
+      Content is provided as-is by blockchair.com; the publisher of
+      this app is not responsible for the accuracy or availability of
+      that content, nor for any decisions you make based on it.
+
+      By tapping "I understand", you accept these terms and use the
+      app for personal, development, or educational purposes.
+    accept_label: "I understand"
+    decline_label: "Exit"
+    require_accept: true

@@ -1,0 +1,30 @@
+{
+  "_comment": "PLACEHOLDER values — replace with your real Firebase project by running `flutterfire configure` (see README). Builds will succeed with this file as-is, but Firebase Analytics / Crashlytics / FCM will not work until you regenerate it.",
+  "project_info": {
+    "project_number": "0000000000",
+    "project_id": "your-firebase-project-id",
+    "storage_bucket": "your-firebase-project-id.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:0000000000:android:0000000000000000000000",
+        "android_client_info": {
+          "package_name": "com.app.websight"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "YOUR_FIREBASE_API_KEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

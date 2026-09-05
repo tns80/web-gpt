@@ -1,0 +1,30 @@
+{
+  "_comment": "PLACEHOLDER. Run `flutterfire configure` after setting your unique applicationId in android/app/build.gradle.kts. That command will generate a real google-services.json (this file) and lib/firebase_options.dart. Do NOT commit the generated google-services.json — it is gitignored and contains your project's API keys.",
+  "project_info": {
+    "project_number": "0000000000",
+    "project_id": "your-firebase-project-id",
+    "storage_bucket": "your-firebase-project-id.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:0000000000:android:0000000000000000000000",
+        "android_client_info": {
+          "package_name": "com.yourcompany.yourapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "YOUR_FIREBASE_API_KEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

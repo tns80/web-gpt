@@ -1,0 +1,522 @@
+# WebSight `webview_config.yaml` — canonical reference
+#
+# This file documents EVERY YAML key that WebSight understands today AND
+# every key that exists for forward-compatibility but is not yet honored
+# at runtime. Each key is annotated with one of:
+#
+#   ✅  honored at runtime — Dart code reads it and behaves accordingly.
+#   🛠  honored at build time — `tool/configure.dart` propagates it into
+#       Gradle / manifest / strings / pubspec on the integrator's machine.
+#   🚧  reserved — accepted by the parser but not yet consumed; expect
+#       runtime support in a future release. Setting these today has no
+#       effect.
+#
+# Live demo configs in `assets/webview_config.yaml` use the small subset
+# of these keys actually needed to ship; this file is the long-form
+# index.
+
+webview_config:
+
+  # =========================================================================
+  # APP IDENTITY
+  # =========================================================================
+  app:
+    # ✅ Display name — status bar, launcher, _NativeSettingsPage header.
+    name: "WebSight"
+
+    # ✅ Primary first-party host (no scheme/path). Drives the WebView's
+    # navigation allowlist and the `tool/configure.dart` host propagation.
+    host: "YOUR_PRIMARY_HOST_HERE"
+
+    # ✅ Initial URL the WebView loads on launch. Must match a route in
+    # `flutter_ui.routes[]`.
+    home_url: "https://YOUR_PRIMARY_HOST_HERE/"
+
+    # 🛠 Android applicationId. Reverse-DNS, lowercase. Propagated into
+    # `android/app/build.gradle.kts` (applicationId + namespace) and
+    # `AndroidManifest.xml` ${applicationId} placeholders.
+    application_id: "com.yourcompany.yourapp"
+
+    # 🛠 AdMob console App ID (the one with a `~`). NOT a Unit ID.
+    # Propagated into the `<meta-data
+    # android:name="com.google.android.gms.ads.APPLICATION_ID">` block.
+    admob_app_id: "ca-app-pub-XXXXXXXXXX~YYYYYYYYYY"
+
+    # 🛠 Optional `pubspec.yaml` version override. `<semver>+<build>`.
+    version: "1.0.0+1"
+
+    # ✅ User-agent strategy applied to the WebView.
+    user_agent:
+      mode: "append"             # system | append | custom
+      append: " WebSight/1.0"
+      custom: null               # required when mode == custom
+
+  # =========================================================================
+  # NAVIGATION
+  # =========================================================================
+  navigation:
+    # ✅ Hosts that may load in the WebView via clicked links but should
+    # be opened in Custom Tabs / external browser instead of in-app.
+    external_allowlist:
+      - "YOUR_PRIMARY_HOST_HERE"
+
+    # ✅ Deep-link configuration. `tool/configure.dart` propagates the
+    # `app.host` into the first entry of `hosts`. The manifest's
+    # `<intent-filter android:autoVerify>` is generated from this.
+    deep_links:
+      enable: true
+      hosts:
+        - "YOUR_PRIMARY_HOST_HERE"
+
+  # =========================================================================
+  # WEBVIEW ENGINE
+  # =========================================================================
+  webview_settings:
+    # ✅ Top-level Webkit toggles consumed at controller init.
+    javascript_enabled: true
+    dom_storage_enabled: true
+
+    # ✅ Custom CSS / JS injected on every onPageFinished when bridge
+    # injection is allowed (i.e., current host is in
+    # `security.restrict_to_hosts`).
+    custom_user_scripts:
+      inject_css:
+        enabled: true
+        asset_path: "website/css/custom.css"
+      inject_js:
+        enabled: false
+        asset_path: "website/js/test.js"
+
+    # ✅ Multi-window popup support. webview_flutter_android does not expose
+    # `WebChromeClient.onCreateWindow` publicly, so WebSight intercepts
+    # `window.open(url)` from the wrapped page and pushes the URL into a
+    # Flutter modal `WebView` route. Critical for OAuth flows that pop a
+    # new window (Google / Microsoft / Twitter / Facebook sign-in).
+    multi_window:
+      enabled: true                  # disable to suppress popups entirely
+      close_on_parent_host: true     # auto-close when popup hits a parent host
+      reload_parent_on_close: true   # reload the parent page after popup closes
+
+    # ✅ HTML5 `<video>` fullscreen handler. Without this, tapping the
+    # fullscreen icon on a `<video>` element does nothing (the page calls
+    # `WebChromeClient.onShowCustomView`, which would otherwise be ignored).
+    fullscreen_video:
+      enabled: true
+      lock_landscape: false          # let the video / page decide orientation
+
+  # ✅ Per-route booleans live on each route entry; this top-level
+  # `pull_to_refresh:` block is read by the loader but only the route's
+  # own `pull_to_refresh: true` actually drives the gesture today.
+
+  # =========================================================================
+  # WEBVIEW PERMISSIONS (in-page browser APIs)
+  # =========================================================================
+  permissions:
+    # ✅ Allowlist for prompts the wrapped site can trigger via standard
+    # browser APIs (`getUserMedia`, `navigator.geolocation`). When a
+    # request matches the allowlist, the corresponding Android runtime
+    # permission is requested via `permission_handler`; the user sees a
+    # single OS-level prompt, not a separate WebView dialog. When a
+    # request is denied here, the WebView's resource grant is denied
+    # entirely (so the page's `getUserMedia` Promise rejects).
+    webview:
+      allow_camera: true              # in-page camera (e.g. WebRTC samples)
+      allow_microphone: true          # getUserMedia audio
+      allow_geolocation: true         # navigator.geolocation prompts
+      allow_protected_media: false    # EME / DRM resource id; opt-in only
+      retain_geolocation: false       # remember the user's geo grant per origin
+
+  # =========================================================================
+  # FILE UPLOADS / DOWNLOADS
+  # =========================================================================
+  file_uploads:
+    # ✅ When false, `<input type=file>` clicks return no files (silent).
+    enabled: true
+    # ✅ When true, the chooser appends camera-capture intents (image +
+    # video) alongside the system file picker.
+    capture_camera: true
+    # ✅ Default MIME allow-list when the page didn't restrict via
+    # `accept=...`. Use ["*/*"] for unrestricted.
+    mime_types: ["*/*"]
+
+  downloads:
+    # ✅ Master switch for the JS interceptor.
+    enabled: true
+    # ✅ When true, `<a download>` clicks on http(s) URLs route into
+    # Android's DownloadManager via the bridge's registerHttpDownload.
+    use_android_download_manager: true
+    # ✅ When true, `blob:` URL clicks decode + write via MediaStore.
+    support_blob_urls: true
+
+  # =========================================================================
+  # SPLASH / OFFLINE
+  # =========================================================================
+  splash:
+    # ✅ In-Flutter splash overlay shown while the first WebView page
+    # loads. For the native pre-Flutter splash, use `flutter_native_splash`
+    # (configured in pubspec.yaml).
+    enabled: false
+    timeout_ms: 1500
+    fade_out_ms: 300
+    image_asset: null            # e.g. "splash/logo.png" — assets/ prefix optional
+    background_color: null       # e.g. "#0B0B0C"; falls back to theme surface
+    tagline: null                # optional one-liner shown under the image
+
+  offline_local_html:
+    # ✅ When true, network-class errors load the bundled fallback page
+    # instead of the default error overlay.
+    fallback_when_offline: false
+    # ✅ Asset path of the fallback HTML.
+    index_asset: "offline/index.html"
+    # 🚧 Open the fallback as the home page on launch.
+    open_local_by_default: false
+
+  # =========================================================================
+  # MONETIZATION & ENGAGEMENT
+  # =========================================================================
+  ads:
+    # ✅ Master switch.
+    enabled: true
+    # ✅ Gates `MobileAds.initialize` behind the UMP consent flow
+    # (`gatherConsent` method-channel call).
+    consent_gate_with_ump: true
+    placements:
+      # ✅ Global banner shown on every route unless overridden.
+      global_banner:
+        screen_scope: "all"      # all | route
+        format: "banner_adaptive"  # banner_adaptive | banner_collapsible
+        position: "bottom"       # top | bottom
+        ad_unit_id: "ca-app-pub-3940256099942544/6300978111"
+      # ✅ Route-specific banner override.
+      home_collapsible:
+        screen_scope: "route"
+        route: "/web/home"
+        format: "banner_collapsible"
+        position: "bottom"
+        ad_unit_id: "ca-app-pub-3940256099942544/6300978111"
+
+  billing:
+    # ✅ Master switch for the BillingController.
+    inapp_enabled: true
+    # ✅ Product ids queried via `in_app_purchase`. Receipts arrive via
+    # BillingController.purchases. Server-side validation is the
+    # integrator's responsibility (v1.0 ships client-only).
+    product_ids: ["product1", "product2"]
+
+  rating_prompt:
+    # ✅ Triggers the Play in-app review sheet after `after_launches`
+    # cold starts.
+    enabled: true
+    after_launches: 5
+
+  # =========================================================================
+  # JS BRIDGE
+  # =========================================================================
+  js_bridge:
+    enabled: true
+    # ✅ Global window name. Default `WebSightBridge`.
+    name: "WebSightBridge"
+    # ✅ Allow-list of methods the JS layer may invoke. Methods missing
+    # from this list are dropped (no errors, debug-logged).
+    methods:
+      - "scanBarcode(callbackFn)"
+      - "share(text)"
+      - "getDeviceInfo()"
+      - "downloadBlob(url, filename?)"
+      - "openExternal(url)"
+      - "registerHttpDownload(url, opts?)"
+    # ✅ When true, calls are dropped unless the WebView's current host
+    # is in `security.restrict_to_hosts`.
+    secure_origin_only: true
+    # ✅ Native → JS event handlers. Each event fires when the page
+    # invokes `WebSightBridge._postMessage(event, params)`.
+    inbound_events:
+      - event: "openNative"
+        args: ["route"]
+        action: "navigate:{route}"  # validated against config.routes
+      - event: "toast"
+        args: ["message"]
+        action: "ui.toast:{message}"
+
+  # =========================================================================
+  # LEGAL / DISCLAIMERS
+  # =========================================================================
+  legal:
+    # ✅ First-launch unofficial-app disclaimer dialog. Recommended when
+    # wrapping a third-party site you don't own (personal / dev /
+    # educational use). Acceptance is keyed on a hash of the body text,
+    # so editing this block re-prompts users on next launch.
+    unofficial_disclaimer:
+      enabled: false
+      title: "Unofficial app"
+      body: |
+        This app is an unofficial WebView wrapper around <site>.
+        It is not affiliated with or endorsed by <site operator>.
+        Content is provided as-is by <site>; <publisher> is not responsible
+        for its accuracy or availability.
+
+        By tapping "I understand", you accept these terms and use the app
+        for personal, development, or educational purposes.
+      accept_label: "I understand"
+      decline_label: "Exit"
+      # When true (default), declining exits the app via SystemNavigator.
+      # Set false for advisory mode (re-prompts on next rebuild).
+      require_accept: true
+
+  # =========================================================================
+  # SECURITY
+  # =========================================================================
+  security:
+    # ✅ Allow-list for main-frame navigations. `tool/configure.dart`
+    # propagates `app.host` into the first entry. Off-list hosts are
+    # opened in Custom Tabs.
+    restrict_to_hosts:
+      - "YOUR_PRIMARY_HOST_HERE"
+
+  # =========================================================================
+  # LIFECYCLE
+  # =========================================================================
+  analytics_crash:
+    # ✅ Toggles for the AnalyticsController. Both honor the UMP consent
+    # state implicitly (Crashlytics is disabled until consent resolves).
+    analytics: true
+    crashlytics: true
+
+  updates:
+    # ✅ Behavior of the in_app_update controller.
+    in_app_updates: "flexible"   # none | flexible | immediate
+
+  notifications:
+    # ✅ Whether to prompt for POST_NOTIFICATIONS at launch (Android 13+).
+    post_notifications_permission: true
+    # ✅ Initializes FcmController, registers WebSightMessagingService.
+    fcm_enabled: false
+
+  behavior_overrides:
+    back_button:
+      # ✅ When true, the back button shows a "really exit?" dialog when
+      # the WebView can't go back further.
+      confirm_before_exit: true
+    error_pages:
+      # ✅ When true, connectivity-class errors render the offline overlay.
+      show_offline_page: true
+      # ✅ Whether the offline / generic-error overlays show a Retry button.
+      retry_button: true
+
+  # =========================================================================
+  # FLUTTER UI
+  # =========================================================================
+  flutter_ui:
+    # ✅ Theme applied to the native shell.
+    theme:
+      brightness: "dark"         # light | dark | system
+      primary: "#16A34A"
+      surface: "#0B0B0C"
+      on_surface: "#F5F5F5"
+      use_material3: true
+      font_family: "Inter"
+
+    # ✅ System UI (status / nav bars). Drives `SystemChrome.setEnabledSystemUIMode`
+    # and `setSystemUIOverlayStyle`, plus the AppShell's `extendBody`/
+    # `extendBodyBehindAppBar` flags. The default `edge_to_edge` mode is what
+    # makes a wrapped site feel native rather than embedded — the WebView
+    # paints under transparent system bars.
+    system_ui:
+      mode: "edge_to_edge"        # default | edge_to_edge | immersive_sticky | leanback
+      status_bar:
+        visible: true             # ignored under immersive_sticky / leanback
+        transparent: true
+        icon_brightness: "auto"   # auto (follows theme) | light | dark
+      navigation_bar:
+        visible: true
+        transparent: true
+        icon_brightness: "auto"
+      # ✅ Inject `viewport-fit=cover` + `--websight-safe-*` CSS variables
+      # so the wrapped site can pad its own header/footer with
+      # `env(safe-area-inset-*)` / `var(--websight-safe-top)` and friends.
+      inject_safe_area_css: true
+
+      # ✅ Defensive auto-padding on `<body>` for sites that don't natively
+      # respect `env(safe-area-inset-*)`. Wrapped in `@supports`, so older
+      # engines ignore the rule. Disable for sites that already handle
+      # insets (otherwise the padding stacks).
+      auto_pad_body: true
+      # ✅ Subset of `top` / `bottom` / `left` / `right`. Defaults pad the
+      # status bar (top) and gesture/nav bar (bottom). Add `left`/`right`
+      # when shipping a landscape-friendly app on side-notched displays.
+      auto_pad_edges: ["top", "bottom"]
+
+    layout:
+      # ✅ One of: drawer | bottom_tabs | none. (top_tabs is reserved.)
+      scaffold: "drawer"
+
+      appbar:
+        # ✅ Visibility default; per-route `appbar_visible` overrides.
+        visible: true
+        # ✅ Action buttons rendered on the right of the AppBar.
+        # `action:` strings are resolved via the ActionDispatcher:
+        #   navigate:/path  | webview.reload | webview.back |
+        #   bridge.<method> | store.rate    | noop
+        actions:
+          - id: "search"
+            icon: "Icons.search"
+            action: "navigate:/search"
+          - id: "refresh"
+            icon: "Icons.refresh"
+            action: "webview.reload"
+
+      drawer:
+        # ✅ Visibility, header (title/subtitle/avatar), items, footer items.
+        # Each item supports `route:` OR `action:`.
+        visible: true
+        header:
+          title: "WebSight"
+          subtitle: "Explorer"
+          avatar_asset: "assets/logo.png"
+        items:
+          - title: "Home"
+            icon: "Icons.home_outlined"
+            route: "/web/home"
+          - title: "Settings"
+            icon: "Icons.settings_outlined"
+            route: "/native/settings"
+        footer_items:
+          - title: "Rate app"
+            icon: "Icons.thumb_up_off_alt"
+            action: "store.rate"
+          - title: "Privacy"
+            icon: "Icons.privacy_tip_outlined"
+            route: "/web/privacy"
+
+      bottom_tabs:
+        # ✅ Used when `scaffold: "bottom_tabs"`.
+        visible: false
+        initial_index: 0
+        items:
+          - label: "Home"
+            icon: "Icons.public"
+            route: "/web/home"
+
+      floating_action_button:
+        # ✅ Resolves its `action:` via ActionDispatcher (same grammar
+        # as appbar/drawer).
+        visible: false
+        icon: "Icons.add"
+        action: "navigate:/native/new-alert"
+
+    # ✅ Route table. Each route MUST set `path` and `kind`. `kind:
+    # webview` requires `url`. `kind: native` is dispatched to
+    # ConfigurableNativeScreen, which renders a real Settings surface
+    # for `/native/settings` and a labeled placeholder for everything
+    # else.
+    routes:
+      - path: "/web/home"
+        kind: "webview"
+        title: "Home"
+        url: "https://YOUR_PRIMARY_HOST_HERE/"
+        pull_to_refresh: true
+        appbar_visible: true
+
+      # Parameterized routes: `{name}` placeholders in the path become
+      # go_router `:name` segments and are substituted into the URL.
+      - path: "/web/item/{id}"
+        kind: "webview"
+        title: "Item"
+        url: "https://YOUR_PRIMARY_HOST_HERE/#/item/{id}"
+
+      - path: "/native/settings"
+        kind: "native"
+        title: "Settings"
+        icon: "Icons.settings_outlined"
+
+# =============================================================================
+# 🚧 RESERVED / NOT YET WIRED (v1.x roadmap)
+# =============================================================================
+#
+# Setting any key under this comment has no runtime effect today. The
+# parser tolerates them (extra keys never fail the load); we keep them
+# documented so integrators can pre-author configs that will light up
+# in a future release.
+#
+#   app:
+#     orientation: "auto"          # auto | portrait | landscape
+#     debug_webview: true          # devtools / WebView debug bridge
+#     cleartext_permitted: false   # dev-only HTTP allowance
+#
+#   navigation:
+#     open_external_links_in_browser: true  # currently always-on
+#     handle_schemes:
+#       tel: true
+#       mailto: true
+#       intent: true
+#       geo: true
+#       market: true                       # all currently always-on
+#     multiple_windows: true               # currently routed to Custom Tabs
+#
+#   webview_settings:
+#     database_enabled: true
+#     media_playback_requires_gesture: true   # currently hard-coded true
+#     mixed_content: "never"                  # never | compatibility | always
+#     allow_file_access_from_file_urls: false
+#     allow_universal_access_from_file_urls: false
+#     user_gesture_required_for_file_chooser: true
+#     cache_mode: "default"
+#
+#   pull_to_refresh:
+#     enabled: true
+#     top_threshold_dp: 50         # per-route boolean is honored today
+#
+#   ui:
+#     loading_indicator: true
+#     titlebar_tint: "white"
+#     titlebar_bg: "#000000"
+#
+#   ads:
+#     placements:
+#       global_banner:
+#         refresh_seconds: 60
+#       home_collapsible:
+#         collapse_frequency_minutes: 4
+#         max_expanded_seconds: 30
+#         expand_on_launch: true
+#     interstitials:
+#       enabled: false
+#       show_after_clicks: 7        # full impl on the v2 roadmap
+#     rewarded:
+#       enabled: false              # full impl on the v2 roadmap
+#
+#   barcode_scanner:
+#     enabled: true
+#     provider: "mlkit"             # mlkit only today
+#     formats: ["qr_code","code_128","ean_13"]   # currently FORMAT_ALL_FORMATS
+#     camera_permission_runtime: true            # currently always requested
+#
+#   security:
+#     block_file_scheme_navigation: true   # currently always-on
+#     block_about_blank_navigation: true   # currently always-on
+#     verify_ssl_errors: "block"           # block | proceed_debug_only
+#
+#   updates:
+#     play_integrity: true                 # not yet exposed
+#
+#   behavior_overrides:
+#     back_button:
+#       webview_go_back_if_possible: true  # currently always-on
+#
+#   flutter_ui:
+#     layout:
+#       scaffold: "top_tabs"               # only drawer / bottom_tabs / none today
+#       appbar:
+#         title_mode: "route"              # route | static
+#         static_title: "WebSight"
+#         center_title: false
+#     routes:
+#       - widget: "WatchlistScreen"        # routes are dispatched to
+#                                          # ConfigurableNativeScreen by path,
+#                                          # not by widget name today.
+#       - params: ["id"]                   # implicit via {name} placeholders
+#                                          # in path/url; explicit list is reserved
+#     sheets:                              # bottom-sheet registry — reserved
+#       - id: "networkPicker"
+#         title: "Select Network"
+#         widget: "NetworkPickerSheet"
