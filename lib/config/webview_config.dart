@@ -6,6 +6,38 @@ import 'package:json_annotation/json_annotation.dart';
 import 'package:yaml/yaml.dart';
 
 part 'webview_config.g.dart';
+dynamic _withCamelCaseAliases(dynamic value) {
+  if (value is List) {
+    return value.map(_withCamelCaseAliases).toList();
+  }
+
+  if (value is Map<String, dynamic>) {
+    final result = <String, dynamic>{};
+
+    for (final entry in value.entries) {
+      final normalizedValue = _withCamelCaseAliases(entry.value);
+
+      // Keep the original YAML key.
+      result[entry.key] = normalizedValue;
+
+      // Also expose snake_case keys as camelCase aliases.
+      if (entry.key.contains('_')) {
+        final parts = entry.key.split('_');
+        final camelCase = parts.first +
+            parts.skip(1).map((part) {
+              if (part.isEmpty) return '';
+              return '${part[0].toUpperCase()}${part.substring(1)}';
+            }).join();
+
+        result.putIfAbsent(camelCase, () => normalizedValue);
+      }
+    }
+
+    return result;
+  }
+
+  return value;
+}
 
 // Top-level configuration class
 @JsonSerializable(createToJson: false)
@@ -58,11 +90,14 @@ class WebSightConfig {
       final yamlMap = loadYaml(yamlString) as YamlMap;
       final jsonMap = json.decode(json.encode(yamlMap)) as Map<String, dynamic>;
       // Some YAML files wrap the spec under a top-level "webview_config" key.
-      final root = (jsonMap['webview_config'] is Map<String, dynamic>)
-          ? jsonMap['webview_config'] as Map<String, dynamic>
-          : jsonMap;
+      final rawRoot = (jsonMap['webview_config'] is Map<String, dynamic>)
+    ? jsonMap['webview_config'] as Map<String, dynamic>
+    : jsonMap;
 
-      final config = WebSightConfig.fromJson(root).._raw = root;
+      final normalizedRoot =
+          _withCamelCaseAliases(rawRoot) as Map<String, dynamic>;
+
+      final config = WebSightConfig.fromJson(normalizedRoot).._raw = rawRoot;
       report.log('Configuration loaded and parsed successfully.');
       return ConfigValidationResult(config: config, report: report);
     } catch (e, s) {
