@@ -34,6 +34,9 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+        
+      - name: Apply WebSight configuration
+        run: dart run tool/configure.dart
 
       - name: Verify formatting (lib + test + tool)
         run: dart format --set-exit-if-changed lib test tool
@@ -111,6 +114,13 @@ jobs:
 
       - name: Build debug APK
         run: flutter build apk --debug --target-platform android-arm64
+
+      - name: Upload GPT Web APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: gpt-web-arm64
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
 
       - name: Guard against secret leaks (no real Firebase keys committed)
         run: |
