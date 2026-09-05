@@ -39,7 +39,8 @@ jobs:
         run: |
           dart run tool/configure.dart
           sed -i 's/^name: .*/name: websight/' pubspec.yaml
-
+          sed -i 's/namespace = "com.local.gptweb"/namespace = "com.app.websight"/' android/app/build.gradle.kts
+      
       - name: Verify formatting (lib + test + tool)
         run: dart format --set-exit-if-changed lib test tool
 
