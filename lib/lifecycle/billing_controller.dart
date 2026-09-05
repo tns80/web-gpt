@@ -106,9 +106,9 @@ class BillingController extends ChangeNotifier {
       final params = PurchaseParam(productDetails: product);
       _lastError = null;
       notifyListeners();
-      return consumable
+      return await (consumable
           ? _iap.buyConsumable(purchaseParam: params)
-          : _iap.buyNonConsumable(purchaseParam: params);
+          : _iap.buyNonConsumable(purchaseParam: params));
     } catch (e, st) {
       _recordError('buy($productId)', e, st);
       rethrow;
