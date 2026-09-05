@@ -8,14 +8,16 @@
 # -----------------------------------------------------------------------------
 app:
   # The name of your application as it will appear in the UI.
-  name: "WebSight Demo"
+  name: "GPT Web"
 
   # The primary domain your WebView should treat as first-party.
   # CRITICAL: This MUST match your website's host. Do not include 'https://' or paths.
-  host: "flutter.dev"
+  host: "chatgpt.com"
 
   # The full initial URL to load when the app starts.
-  home_url: "https://flutter.dev/"
+  home_url: "https://chatgpt.com/"
+  application_id: "com.local.gptweb"
+  version: "1.0.0+1"
 
   # Android applicationId (reverse-DNS, lowercase).
   # When set, `dart run tool/configure.dart` writes this into
@@ -42,17 +44,17 @@ flutter_ui:
   theme:
     # The overall brightness of the app's native UI.
     # Options: "light", "dark", "system"
-    brightness: "dark"
+    brightness: "system"
 
     # The primary seed color for the entire app.
     # All other colors will be algorithmically generated from this color.
-    primary: "#0175C2"
+    primary: "#000000"
 
     # (Optional) Override the main background color.
-    # surface: "#0B0B0C"
+    surface: "#000000"
 
     # (Optional) Override the color of text and icons on the main background.
-    # on_surface: "#F5F5F5"
+    on_surface: "#FFFFFF"
 
     # Whether to use the modern Material 3 design system. Highly recommended.
     use_material3: true
@@ -109,11 +111,11 @@ flutter_ui:
     # Options: "drawer", "bottom_tabs", "top_tabs", "none"
     # NOTE: Set "none" (and `appbar.visible: false`) for the most native
     # feel — the wrapped site provides its own UI; WebSight is invisible.
-    scaffold: "drawer"
+    scaffold: "none"
 
     appbar:
       # Whether the AppBar is visible by default. Can be overridden per route.
-      visible: true
+      visible: false
       # A list of icon buttons to display on the right side of the AppBar.
       actions:
         - id: "refresh"
@@ -133,12 +135,13 @@ flutter_ui:
 routes:
   - path: "/web/home"
     kind: "webview"
-    title: "Flutter Home"
-    label: "Home"
-    icon: "Icons.home_outlined"
-    url: "https://flutter.dev/"
-    appbar_visible: true
+    title: "GPT Web"
+    label: "GPT"
+    icon: "Icons.chat_outlined"
+    url: "https://chatgpt.com/"
+    appbar_visible: false
     pull_to_refresh: true
+    
 
   - path: "/native/watchlist"
     kind: "native"
@@ -240,7 +243,13 @@ js_bridge:
 security:
   # List of hosts the WebView is allowed to navigate to internally.
   restrict_to_hosts:
-    - "flutter.dev"
+    - "chatgpt.com"
+    - "openai.com"
+    - "auth.openai.com"
+    - "auth0.openai.com"
+    - "setup.auth.openai.com"
+    - "setup.workos.com"
+    - "forwarder.workos.com"
 
 # -----------------------------------------------------------------------------
 # [WEBVIEW PERMISSIONS]
@@ -262,8 +271,8 @@ permissions:
 # [MONETIZATION & COMPLIANCE]
 # -----------------------------------------------------------------------------
 ads:
-  enabled: true
-  consent_gate_with_ump: true
+  enabled: false
+  consent_gate_with_ump: false
   
   placements:
     # A global fallback banner ad.
@@ -288,14 +297,14 @@ ads:
 # -----------------------------------------------------------------------------
 updates:
   # In-app update mode. Options: "none", "flexible", "immediate"
-  in_app_updates: "flexible"
+  in_app_updates: "none"
 
 analytics_crash:
-  analytics: true
-  crashlytics: true
+  analytics: false
+  crashlytics: false
 
 notifications:
-  post_notifications_permission: true
+  post_notifications_permission: false
   fcm_enabled: false
 
 behavior_overrides:
