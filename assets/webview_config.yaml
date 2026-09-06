@@ -81,12 +81,12 @@ flutter_ui:
     status_bar:
       visible: true             # ignored under immersive_sticky / leanback
       transparent: true         # let the WebView paint behind the bar
-      icon_brightness: "auto"   # auto | light | dark; auto follows theme
+      icon_brightness: "dark"   # auto | light | dark; auto follows theme
 
     navigation_bar:
       visible: true
       transparent: true
-      icon_brightness: "auto"
+      icon_brightness: "dark"
 
     # Inject `viewport-fit=cover` + a `--websight-safe-*` CSS variable shim
     # so the wrapped site can pad its own header/footer with
@@ -100,7 +100,8 @@ flutter_ui:
     # status / nav bars. Wrapped in an `@supports` block so older engines
     # ignore it. Disable when the wrapped site handles insets itself, or
     # tighten `auto_pad_edges` if only specific edges overlap.
-    auto_pad_body: true
+    auto_pad_body: false
+
     # Edges to pad: any of `top`, `bottom`, `left`, `right`. Defaults to
     # the two that overlap content in portrait. `left`/`right` matter only
     # in landscape on side-notched devices.
