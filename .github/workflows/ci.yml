@@ -115,14 +115,14 @@ jobs:
           path: coverage/lcov.info
           if-no-files-found: ignore
 
-      - name: Build debug APK
-        run: flutter build apk --debug --target-platform android-arm64
+      - name: Build release APK
+        run: flutter build apk --release --target-platform android-arm64
 
       - name: Upload GPT Web APK
         uses: actions/upload-artifact@v7
         with:
-          name: gpt-web-arm64
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: gpt-web-arm64-release
+          path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
 
       - name: Guard against secret leaks (no real Firebase keys committed)
